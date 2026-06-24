@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
 import { INACTIVE_ACCOUNT_MESSAGE } from '@/lib/auth/inactive-user';
@@ -94,6 +95,10 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <div className="auth-footer">
+          New to TaskFlow? <Link href="/auth/register">Create an account</Link>
+        </div>
       </div>
     </div>
   );
