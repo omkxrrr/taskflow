@@ -26,6 +26,19 @@ A role-based task management system built with **Next.js 14**, **Supabase**, and
 
 ---
 
+## Screenshots
+
+### Login Page
+![TaskFlow Login Page](screenshots/login-page.png)
+
+### Register Page
+![TaskFlow Register Page](screenshots/register-page.png)
+
+### Chat Page
+![TaskFlow Chat Page](screenshots/chat-page.png)
+
+---
+
 ## Folder Structure
 
 ```
