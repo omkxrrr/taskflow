@@ -13,6 +13,7 @@ interface LoginForm {
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
   const supabase = createClient();
 
@@ -24,6 +25,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
+    setStatusMessage('Signing in...');
     
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
@@ -31,7 +33,11 @@ export default function LoginPage() {
     });
 
     if (error) {
-      toast.error(error.message);
+      const message = error.message.toLowerCase().includes('email not confirmed')
+        ? 'Please confirm your email address first, then sign in.'
+        : error.message;
+      toast.error(message);
+      setStatusMessage(message);
       setLoading(false);
       return;
     }
@@ -45,12 +51,14 @@ export default function LoginPage() {
     if (profile?.is_active === false) {
       await supabase.auth.signOut();
       toast.error(INACTIVE_ACCOUNT_MESSAGE);
+      setStatusMessage(INACTIVE_ACCOUNT_MESSAGE);
       setLoading(false);
       return;
     }
 
     console.log('Session:', authData.session);
     toast.success('Welcome back!');
+    setStatusMessage('Welcome back! Redirecting...');
     
     // Force hard redirect
     setTimeout(() => {
@@ -95,6 +103,8 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        {statusMessage && <div className="auth-status-message">{statusMessage}</div>}
 
         <div className="auth-footer">
           New to TaskFlow? <Link href="/auth/register">Create an account</Link>
