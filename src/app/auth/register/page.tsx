@@ -14,6 +14,8 @@ type RegisterMethod = 'email' | 'phone';
 interface RegisterForm {
   full_name: string;
   email: string;
+  password: string;
+  confirm_password: string;
   phone: string;
   otp: string;
 }
@@ -46,7 +48,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const { register, handleSubmit, getValues, formState: { errors } } = useForm<RegisterForm>();
+  const { register, handleSubmit, watch, getValues, formState: { errors } } = useForm<RegisterForm>();
 
   const selectedRole = registrationOptions.find(option => option.value === registrationType)?.role ?? 'intern';
 
@@ -100,33 +102,18 @@ export default function RegisterPage() {
     setStatusMessage(null);
   };
 
-  const sendEmailOtp = async () => {
-    const fullName = getValues('full_name')?.trim();
-    const email = getValues('email')?.trim();
-
-    if (!fullName) {
-      toast.error('Full name is required');
-      setStatusMessage('Full name is required');
-      return;
-    }
-
-    if (!email) {
-      toast.error('Email address is required');
-      setStatusMessage('Email address is required');
-      return;
-    }
-
+  const onEmailSubmit = async (data: RegisterForm) => {
     setLoading(true);
-    setStatusMessage('Sending email OTP...');
+    setStatusMessage('Creating your account...');
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
+      const { error } = await supabase.auth.signUp({
+        email: data.email.trim(),
+        password: data.password,
         options: {
-          shouldCreateUser: true,
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard&role=${selectedRole}`,
           data: {
-            full_name: fullName,
+            full_name: data.full_name.trim(),
             role: selectedRole,
           },
         },
@@ -138,51 +125,12 @@ export default function RegisterPage() {
         return;
       }
 
-      setOtpSent(true);
-      toast.success('OTP sent to your email address');
-      setStatusMessage('OTP sent to your email address');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to send email OTP.';
-      toast.error(message);
+      const message = 'Account created! Please confirm your email address.';
+      toast.success(message);
       setStatusMessage(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyEmailOtp = async () => {
-    const fullName = getValues('full_name')?.trim();
-    const email = getValues('email')?.trim();
-    const otp = getValues('otp')?.trim();
-
-    if (!email || !otp) {
-      toast.error('Email address and OTP are required');
-      setStatusMessage('Email address and OTP are required');
-      return;
-    }
-
-    setLoading(true);
-    setStatusMessage('Verifying email OTP...');
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email',
-      });
-
-      if (error) {
-        toast.error(error.message);
-        setStatusMessage(error.message);
-        return;
-      }
-
-      await updateProfileAfterAuth(fullName);
-      toast.success('Registration complete');
-      setStatusMessage('Registration complete');
-      router.push('/dashboard');
+      setTimeout(() => router.push('/auth/login'), 700);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Email OTP verification failed.';
+      const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
       toast.error(message);
       setStatusMessage(message);
     } finally {
@@ -287,7 +235,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="auth-title">Create your TaskFlow account</div>
-        <div className="auth-subtitle">Choose your access type and register with email or phone OTP.</div>
+        <div className="auth-subtitle">Choose your access type and register with email confirmation or phone OTP.</div>
 
         <div className="auth-choice-grid">
           {registrationOptions.map(option => (
@@ -313,7 +261,7 @@ export default function RegisterPage() {
           Continue with Google
         </button>
 
-        <div className="auth-divider"><span>or use OTP</span></div>
+        <div className="auth-divider"><span>or register with</span></div>
 
         <div className="auth-method-tabs" role="tablist" aria-label="Registration method">
           <button
@@ -321,7 +269,7 @@ export default function RegisterPage() {
             className={method === 'email' ? 'active' : ''}
             onClick={() => switchMethod('email')}
           >
-            Email OTP
+            Email
           </button>
           <button
             type="button"
@@ -335,7 +283,7 @@ export default function RegisterPage() {
         <form
           className="auth-form"
           onSubmit={handleSubmit(() => {
-            if (method === 'email') return otpSent ? verifyEmailOtp() : sendEmailOtp();
+            if (method === 'email') return onEmailSubmit(getValues());
             return otpSent ? verifyPhoneOtp() : sendPhoneOtp();
           }, onInvalidSubmit)}
           noValidate
@@ -351,16 +299,46 @@ export default function RegisterPage() {
           </div>
 
           {method === 'email' ? (
-            <div className="form-group">
-              <label className="form-label">Email address</label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="you@example.com"
-                {...register('email', { required: method === 'email' ? 'Email address is required' : false })}
-              />
-              {errors.email && <span className="form-error">{errors.email.message}</span>}
-            </div>
+            <>
+              <div className="form-group">
+                <label className="form-label">Email address</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="you@example.com"
+                  {...register('email', { required: method === 'email' ? 'Email address is required' : false })}
+                />
+                {errors.email && <span className="form-error">{errors.email.message}</span>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="********"
+                  {...register('password', {
+                    required: method === 'email' ? 'Password is required' : false,
+                    minLength: { value: 6, message: 'Min 6 characters' },
+                  })}
+                />
+                {errors.password && <span className="form-error">{errors.password.message}</span>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Confirm password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="********"
+                  {...register('confirm_password', {
+                    required: method === 'email' ? 'Please confirm your password' : false,
+                    validate: val => method !== 'email' || val === watch('password') || 'Passwords do not match',
+                  })}
+                />
+                {errors.confirm_password && <span className="form-error">{errors.confirm_password.message}</span>}
+              </div>
+            </>
           ) : (
             <div className="form-group">
               <label className="form-label">Phone number</label>
@@ -393,7 +371,7 @@ export default function RegisterPage() {
             ) : otpSent ? (
               'Verify and register'
             ) : (
-              method === 'email' ? 'Send Email OTP' : 'Send Phone OTP'
+              method === 'email' ? 'Create account' : 'Send Phone OTP'
             )}
           </button>
         </form>
