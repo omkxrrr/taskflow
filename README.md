@@ -28,23 +28,47 @@ A role-based task management system built with **Next.js 14**, **Supabase**, and
 
 ## Screenshots
 
-### Brand
-![TaskFlow Logo](screenshots/taskflow-logo.png)
+### Admin Dashboard - Dark Mode
+![TaskFlow Admin Dashboard Dark Mode](screenshots/admin-dashboard-dark.png)
 
-### Login Page
-![TaskFlow Login Page](screenshots/login-page.png)
+### My Tasks
+![TaskFlow My Tasks](screenshots/my-tasks.png)
 
-### Register Page
-![TaskFlow Register Page](screenshots/register-page.png)
+### Schedule Meeting
+![TaskFlow Schedule Meeting Modal](screenshots/schedule-meeting-modal.png)
 
-### Registration Form
-![TaskFlow Registration Form](screenshots/registration-form.png)
+### Internal Chat
+![TaskFlow Internal Chat](screenshots/chat.png)
 
-### Completion Widget
-![TaskFlow Completion Widget](screenshots/completion-widget.png)
+### Daily Updates
+![TaskFlow Daily Updates](screenshots/daily-updates.png)
 
-### Chat Page
-![TaskFlow Chat Page](screenshots/chat-page.png)
+### Departments
+![TaskFlow Departments](screenshots/departments.png)
+
+### Team Members
+![TaskFlow Team Members](screenshots/team-members.png)
+
+### Performance
+![TaskFlow Performance](screenshots/performance.png)
+
+### Reports
+![TaskFlow Reports](screenshots/reports.png)
+
+### Attendance
+![TaskFlow Attendance](screenshots/attendance.png)
+
+### Leave Requests
+![TaskFlow Leave Requests](screenshots/leave-requests.png)
+
+### Warnings
+![TaskFlow Warnings](screenshots/warnings.png)
+
+### Create Event
+![TaskFlow Create Event Modal](screenshots/create-event-modal.png)
+
+### Admin Dashboard - Light Mode
+![TaskFlow Admin Dashboard Light Mode](screenshots/admin-dashboard-light.png)
 
 ---
 
