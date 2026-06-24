@@ -6,6 +6,8 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/dashboard';
+  const requestedRole = searchParams.get('role');
+  const role = requestedRole === 'admin' || requestedRole === 'intern' ? requestedRole : null;
 
   if (code) {
     const cookieStore = await cookies();
@@ -25,6 +27,18 @@ export async function GET(request: NextRequest) {
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      if (role) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({
+              role,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'TaskFlow User',
+            })
+            .eq('id', user.id);
+        }
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

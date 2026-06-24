@@ -1,32 +1,168 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
+import type { UserRole } from '@/types';
+
+type RegistrationType = 'admin' | 'team_member';
+type RegisterMethod = 'email' | 'phone';
 
 interface RegisterForm {
   full_name: string;
   email: string;
   password: string;
   confirm_password: string;
+  phone: string;
+  otp: string;
 }
+
+const registrationOptions: Array<{
+  value: RegistrationType;
+  title: string;
+  description: string;
+  role: UserRole;
+}> = [
+  {
+    value: 'team_member',
+    title: 'Team Member Registration',
+    description: 'For employees, associates, and team contributors',
+    role: 'intern',
+  },
+  {
+    value: 'admin',
+    title: 'Admin Registration',
+    description: 'For managers, mentors, and operations leads',
+    role: 'admin',
+  },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>();
   const supabase = createClient();
+  const [registrationType, setRegistrationType] = useState<RegistrationType>('team_member');
+  const [method, setMethod] = useState<RegisterMethod>('email');
+  const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const { register, handleSubmit, watch, getValues, formState: { errors } } = useForm<RegisterForm>();
 
-  const onSubmit = async (data: RegisterForm) => {
+  const selectedRole = registrationOptions.find(option => option.value === registrationType)?.role ?? 'intern';
+
+  const updateProfileAfterAuth = async (fullName: string, phone?: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from('profiles')
+      .update({
+        full_name: fullName,
+        role: selectedRole,
+        ...(phone ? { phone } : {}),
+      })
+      .eq('id', user.id);
+  };
+
+  const handleGoogleRegister = async () => {
+    setLoading(true);
+    const role = selectedRole;
+    const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard&role=${role}`;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+    }
+  };
+
+  const onEmailSubmit = async (data: RegisterForm) => {
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
-        data: { full_name: data.full_name, role: 'intern' },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard&role=${selectedRole}`,
+        data: {
+          full_name: data.full_name,
+          role: selectedRole,
+        },
       },
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success('Account created! Please check your email to confirm.');
+    router.push('/auth/login');
+  };
+
+  const sendPhoneOtp = async () => {
+    const fullName = getValues('full_name')?.trim();
+    const phone = getValues('phone')?.trim();
+
+    if (!fullName) {
+      toast.error('Full name is required');
+      return;
+    }
+
+    if (!phone) {
+      toast.error('Phone number is required');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+      options: {
+        data: {
+          full_name: fullName,
+          role: selectedRole,
+          phone,
+        },
+      },
+    });
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    setOtpSent(true);
+    toast.success('OTP sent to your phone number');
+  };
+
+  const verifyPhoneOtp = async () => {
+    const fullName = getValues('full_name')?.trim();
+    const phone = getValues('phone')?.trim();
+    const otp = getValues('otp')?.trim();
+
+    if (!phone || !otp) {
+      toast.error('Phone number and OTP are required');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone,
+      token: otp,
+      type: 'sms',
     });
 
     if (error) {
@@ -35,21 +171,66 @@ export default function RegisterPage() {
       return;
     }
 
-    toast.success('Account created! Please check your email to confirm.');
-    router.push('/auth/login');
+    await updateProfileAfterAuth(fullName, phone);
+    setLoading(false);
+    toast.success('Registration complete');
+    router.push('/dashboard');
   };
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className="auth-card auth-card-wide">
         <div className="auth-logo">
           <div className="auth-logo-text">Task<em>Flow</em></div>
         </div>
 
-        <div className="auth-title">Create an account</div>
-        <div className="auth-subtitle">You&apos;ll be registered as an intern by default</div>
+        <div className="auth-title">Create your TaskFlow account</div>
+        <div className="auth-subtitle">Choose your access type and register with email, Google, or phone OTP.</div>
 
-        <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
+        <div className="auth-choice-grid">
+          {registrationOptions.map(option => (
+            <button
+              key={option.value}
+              type="button"
+              className={`auth-choice ${registrationType === option.value ? 'active' : ''}`}
+              onClick={() => setRegistrationType(option.value)}
+            >
+              <span>{option.title}</span>
+              <small>{option.description}</small>
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className="auth-google-button"
+          onClick={handleGoogleRegister}
+          disabled={loading}
+        >
+          <span className="auth-google-icon">G</span>
+          Continue with Google
+        </button>
+
+        <div className="auth-divider"><span>or register with</span></div>
+
+        <div className="auth-method-tabs" role="tablist" aria-label="Registration method">
+          <button
+            type="button"
+            className={method === 'email' ? 'active' : ''}
+            onClick={() => setMethod('email')}
+          >
+            Email
+          </button>
+          <button
+            type="button"
+            className={method === 'phone' ? 'active' : ''}
+            onClick={() => setMethod('phone')}
+          >
+            Phone OTP
+          </button>
+        </div>
+
+        <form className="auth-form" onSubmit={handleSubmit(onEmailSubmit)}>
           <div className="form-group">
             <label className="form-label">Full name</label>
             <input
@@ -60,45 +241,86 @@ export default function RegisterPage() {
             {errors.full_name && <span className="form-error">{errors.full_name.message}</span>}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Email address</label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="you@example.com"
-              {...register('email', { required: 'Email is required' })}
-            />
-            {errors.email && <span className="form-error">{errors.email.message}</span>}
-          </div>
+          {method === 'email' ? (
+            <>
+              <div className="form-group">
+                <label className="form-label">Email address</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="you@example.com"
+                  {...register('email', { required: method === 'email' ? 'Email is required' : false })}
+                />
+                {errors.email && <span className="form-error">{errors.email.message}</span>}
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Min 6 characters' } })}
-            />
-            {errors.password && <span className="form-error">{errors.password.message}</span>}
-          </div>
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="********"
+                  {...register('password', {
+                    required: method === 'email' ? 'Password is required' : false,
+                    minLength: { value: 6, message: 'Min 6 characters' },
+                  })}
+                />
+                {errors.password && <span className="form-error">{errors.password.message}</span>}
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">Confirm password</label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              {...register('confirm_password', {
-                required: 'Please confirm your password',
-                validate: val => val === watch('password') || 'Passwords do not match',
-              })}
-            />
-            {errors.confirm_password && <span className="form-error">{errors.confirm_password.message}</span>}
-          </div>
+              <div className="form-group">
+                <label className="form-label">Confirm password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="********"
+                  {...register('confirm_password', {
+                    required: method === 'email' ? 'Please confirm your password' : false,
+                    validate: val => method !== 'email' || val === watch('password') || 'Passwords do not match',
+                  })}
+                />
+                {errors.confirm_password && <span className="form-error">{errors.confirm_password.message}</span>}
+              </div>
 
-          <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
-            {loading ? <><span className="spinner" /> Creating account…</> : 'Create account'}
-          </button>
+              <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
+                {loading ? <><span className="spinner" /> Creating account...</> : 'Create account'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="form-group">
+                <label className="form-label">Phone number</label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  placeholder="+91 9876543210"
+                  {...register('phone')}
+                />
+              </div>
+
+              {otpSent && (
+                <div className="form-group">
+                  <label className="form-label">Enter OTP</label>
+                  <input
+                    className="form-input"
+                    inputMode="numeric"
+                    placeholder="6 digit OTP"
+                    {...register('otp')}
+                  />
+                </div>
+              )}
+
+              {!otpSent ? (
+                <button type="button" className="btn btn-primary btn-lg w-full" onClick={sendPhoneOtp} disabled={loading}>
+                  {loading ? <><span className="spinner" /> Sending OTP...</> : 'Send OTP'}
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary btn-lg w-full" onClick={verifyPhoneOtp} disabled={loading}>
+                  {loading ? <><span className="spinner" /> Verifying...</> : 'Verify and register'}
+                </button>
+              )}
+            </>
+          )}
         </form>
 
         <div className="auth-footer">

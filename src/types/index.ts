@@ -6,7 +6,8 @@ export type LeaveRequestType = 'casual' | 'sick' | 'personal' | 'emergency' | 'o
 
 export interface Profile {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   full_name: string;
   role: UserRole;
   position: string | null;

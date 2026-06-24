@@ -18,7 +18,8 @@ CREATE TYPE task_priority AS ENUM ('low', 'medium', 'high');
 -- ============================================================
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email TEXT NOT NULL UNIQUE,
+  email TEXT UNIQUE,
+  phone TEXT,
   full_name TEXT NOT NULL,
   role user_role NOT NULL DEFAULT 'intern',
   created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
@@ -74,12 +75,22 @@ CREATE TRIGGER tasks_updated_at
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, email, full_name, role)
+  INSERT INTO profiles (id, email, phone, full_name, role)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'intern')
+    NEW.phone,
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      NULLIF(split_part(COALESCE(NEW.email, ''), '@', 1), ''),
+      NEW.phone,
+      'TaskFlow User'
+    ),
+    CASE
+      WHEN NEW.raw_user_meta_data->>'role' IN ('admin', 'intern') THEN (NEW.raw_user_meta_data->>'role')::user_role
+      ELSE 'intern'::user_role
+    END
   );
   RETURN NEW;
 END;
