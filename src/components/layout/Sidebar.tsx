@@ -156,7 +156,9 @@ export default function Sidebar({ profile }: SidebarProps) {
     localStorage.setItem('taskflow-theme', newTheme);
   };
 
-  const isAdmin = ['admin', 'super_admin'].includes(profile.role);
+  const userRole = profile?.role || 'intern';
+  const userName = profile?.full_name || profile?.email || 'User';
+  const isAdmin = ['admin', 'super_admin'].includes(userRole);
   const reportsHref = isAdmin ? '/admin/reports' : '/reports';
 
   const handleLogout = async () => {
@@ -166,12 +168,12 @@ export default function Sidebar({ profile }: SidebarProps) {
     router.refresh();
   };
 
-  const initials = profile.full_name
+  const initials = userName
     .split(' ')
     .map(n => n[0])
     .slice(0, 2)
     .join('')
-    .toUpperCase();
+    .toUpperCase() || 'U';
 
   return (
     <aside className="sidebar">
@@ -186,7 +188,7 @@ export default function Sidebar({ profile }: SidebarProps) {
           <Link href="/dashboard" className={`nav-link ${pathname === '/dashboard' ? 'active' : ''}`}>
             <IconDashboard /> Dashboard
           </Link>
-          {profile.role !== 'super_admin' && (
+          {userRole !== 'super_admin' && (
             <Link href="/tasks" className={`nav-link ${pathname.startsWith('/tasks') ? 'active' : ''}`}>
               <IconTasks /> My Tasks
             </Link>
@@ -247,10 +249,10 @@ export default function Sidebar({ profile }: SidebarProps) {
 
       <div className="sidebar-footer">
         <div className="user-card">
-          <div className="user-avatar">{initials}</div>
+            <div className="user-avatar">{initials}</div>
           <div className="user-info">
-            <div className="user-name">{profile.full_name}</div>
-            <div className="user-role">{profile.role.replace('_', ' ')}</div>
+            <div className="user-name">{userName}</div>
+            <div className="user-role">{userRole.replace('_', ' ')}</div>
           </div>
         </div>
         <button onClick={toggleTheme} className="nav-link" style={{ marginBottom: 4 }}>

@@ -679,12 +679,12 @@ export default function EventsPage() {
 
                     {event.description && (
                       <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 8 }}>
-                        {event.description.slice(0, 80)}{event.description.length > 80 ? '...' : ''}
+                        {(event.description || '').slice(0, 80)}{(event.description || '').length > 80 ? '...' : ''}
                       </p>
                     )}
 
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: 'var(--text-2)' }}>
-                      <span>📅 {format(new Date(event.event_date), 'MMM d, yyyy')}</span>
+                      <span>📅 {event.event_date ? format(new Date(event.event_date), 'MMM d, yyyy') : '-'}</span>
                       {event.city && <span>📍 {event.area ? `${event.area}, ` : ''}{event.city}{event.state ? `, ${event.state}` : ''}</span>}
                       {event.poc_name && <span>👤 POC: {event.poc_name}</span>}
                       {event.assignees && event.assignees.length > 0 && (

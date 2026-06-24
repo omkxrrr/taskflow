@@ -266,7 +266,7 @@ export default function LeavePage() {
                   <option value="">Select who you are sending this request to...</option>
                   {mentors.map((mentor: any) => (
                     <option key={mentor.id} value={mentor.id}>
-                      {mentor.full_name} ({mentor.role.replace('_', ' ')})
+                      {mentor.full_name || mentor.email || 'Mentor'} ({(mentor.role || 'admin').replace('_', ' ')})
                     </option>
                   ))}
                 </select>
@@ -341,13 +341,13 @@ export default function LeavePage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                       <span style={{ fontWeight: 700, fontSize: 14 }}>
-                        {request.leave_type.replace('_', ' ').toUpperCase()} Leave
+                        {(request.leave_type || 'leave').replace('_', ' ').toUpperCase()} Leave
                       </span>
                       <span className="badge" style={{
                         color: getStatusColor(request.status),
                         background: getStatusBg(request.status),
                       }}>
-                        {request.status.toUpperCase()}
+                        {(request.status || 'pending').toUpperCase()}
                       </span>
                       <span className="badge badge-submitted">{getLeaveDays(request)} day(s)</span>
                     </div>

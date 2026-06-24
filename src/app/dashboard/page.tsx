@@ -294,7 +294,7 @@ export default function DashboardPage() {
                 <div className="announcement-body">
                   <div className="announcement-top">
                     <strong>{announcement.title}</strong>
-                    <span>{format(new Date(announcement.created_at), 'MMM d, h:mm a')}</span>
+                    <span>{announcement.created_at ? format(new Date(announcement.created_at), 'MMM d, h:mm a') : 'Recently'}</span>
                   </div>
                   <p>{announcement.message}</p>
                   <em>{announcement.author_name || 'Admin'}</em>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                       <div style={{ fontWeight: 600 }}>{task.title}</div>
                       {task.description && (
                         <div className="text-sm" style={{ marginTop: 2 }}>
-                          {task.description.slice(0, 60)}{task.description.length > 60 ? '...' : ''}
+                          {(task.description || '').slice(0, 60)}{(task.description || '').length > 60 ? '...' : ''}
                         </div>
                       )}
                     </td>

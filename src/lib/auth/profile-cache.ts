@@ -13,7 +13,17 @@ export function getCurrentProfile(supabase: any): Promise<{ session: any; profil
         .eq('id', session.user.id)
         .single();
 
-      return { session, profile };
+      return {
+        session,
+        profile: profile || {
+          id: session.user.id,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+          role: session.user.user_metadata?.role || 'intern',
+          is_active: true,
+          department: null,
+        },
+      };
     });
   }
 

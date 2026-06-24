@@ -243,7 +243,7 @@ setDepartments(deptData || []);
                         <option value="">No mentor assigned</option>
                         {mentors.map((mentor: any) => (
                           <option key={mentor.id} value={mentor.id}>
-                            {mentor.full_name} ({mentor.role.replace('_', ' ')})
+                            {mentor.full_name || mentor.email || 'Mentor'} ({(mentor.role || 'admin').replace('_', ' ')})
                           </option>
                         ))}
                       </select>
@@ -311,7 +311,7 @@ setDepartments(deptData || []);
                           .filter((mentor: any) => mentor.id !== editUser.id)
                           .map((mentor: any) => (
                             <option key={mentor.id} value={mentor.id}>
-                              {mentor.full_name} ({mentor.role.replace('_', ' ')})
+                              {mentor.full_name || mentor.email || 'Mentor'} ({(mentor.role || 'admin').replace('_', ' ')})
                             </option>
                           ))}
                       </select>
@@ -393,7 +393,7 @@ setDepartments(deptData || []);
 </td>
 <td>
   <span className={`badge badge-${user.role}`}>
-                        {user.role.replace('_', ' ')}
+                        {(user.role || 'intern').replace('_', ' ')}
                       </span>
                     </td>
                     <td>

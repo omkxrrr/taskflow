@@ -124,7 +124,7 @@ export default function PerformancePage() {
                   {getRankBadge(index)}
                 </div>
                 <div className="user-avatar" style={{ width: 40, height: 40, fontSize: 13 }}>
-                  {p.intern.full_name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                  {(p.intern.full_name || p.intern.email || 'User').split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{p.intern.full_name}</div>

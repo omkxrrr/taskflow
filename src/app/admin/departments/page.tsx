@@ -117,7 +117,7 @@ export default function DepartmentsPage() {
                   <select className="form-select" {...form.register('head_id')}>
                     <option value="">No head assigned</option>
                     {admins.map((a: any) => (
-                      <option key={a.id} value={a.id}>{a.full_name} ({a.role.replace('_', ' ')})</option>
+                      <option key={a.id} value={a.id}>{a.full_name || a.email || 'Admin'} ({(a.role || 'admin').replace('_', ' ')})</option>
                     ))}
                   </select>
                 </div>

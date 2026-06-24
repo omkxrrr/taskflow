@@ -233,7 +233,7 @@ export default function InternReportsPage() {
                         <div style={{ fontWeight: 600 }}>{task.title}</div>
                         {task.description && (
                           <div className="text-sm" style={{ marginTop: 2 }}>
-                            {task.description.slice(0, 70)}{task.description.length > 70 ? '...' : ''}
+                            {(task.description || '').slice(0, 70)}{(task.description || '').length > 70 ? '...' : ''}
                           </div>
                         )}
                       </td>

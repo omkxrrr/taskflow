@@ -413,7 +413,7 @@ export default function AdminTasksPage() {
                       <div style={{ fontWeight: 500 }}>{task.title}</div>
                       {task.description && (
                         <div className="text-sm" style={{ marginTop: 2 }}>
-                          {task.description.slice(0, 50)}{task.description.length > 50 ? '...' : ''}
+                          {(task.description || '').slice(0, 50)}{(task.description || '').length > 50 ? '...' : ''}
                         </div>
                       )}
                     </td>

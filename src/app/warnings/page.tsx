@@ -309,13 +309,13 @@ export default function WarningsPage() {
                         color: getSeverityColor(w.severity),
                         background: getSeverityBg(w.severity),
                       }}>
-                        {w.severity.toUpperCase()}
+                        {(w.severity || 'minor').toUpperCase()}
                       </span>
                       <span style={{
                         fontSize: 11, padding: '2px 8px', borderRadius: 20,
                         background: 'var(--surface-2)', color: 'var(--text-2)'
                       }}>
-                        {w.category.replace(/_/g, ' ')}
+                        {(w.category || 'general').replace(/_/g, ' ')}
                       </span>
                       {w.is_acknowledged && (
                         <span className="badge badge-approved">Acknowledged</span>
@@ -333,7 +333,7 @@ export default function WarningsPage() {
                     </p>
 
                     <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
-                      📅 {format(new Date(w.created_at), 'MMM d, yyyy · h:mm a')}
+                      📅 {w.created_at ? format(new Date(w.created_at), 'MMM d, yyyy · h:mm a') : '-'}
                       {w.is_acknowledged && w.acknowledged_at && (
                         <span style={{ marginLeft: 12 }}>
                           ✅ Acknowledged {format(new Date(w.acknowledged_at), 'MMM d, yyyy')}
