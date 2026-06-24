@@ -921,6 +921,7 @@ tbody td { padding: 12px 14px; font-size: 13.5px; color: var(--text-1); }
 .auth-method-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); margin-bottom: 16px; }
 .auth-method-tabs button { border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: var(--text-2); padding: 10px; font-weight: 800; cursor: pointer; transition: var(--transition); }
 .auth-method-tabs button.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+.auth-status-message { margin-top: 14px; padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); color: var(--text-2); font-size: 13px; line-height: 1.4; }
 
 @media (max-width: 560px) {
   .auth-choice-grid { grid-template-columns: 1fr; }

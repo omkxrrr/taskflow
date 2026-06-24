@@ -47,6 +47,7 @@ export default function RegisterPage() {
   const [method, setMethod] = useState<RegisterMethod>('email');
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const { register, handleSubmit, watch, getValues, formState: { errors } } = useForm<RegisterForm>();
 
   const selectedRole = registrationOptions.find(option => option.value === registrationType)?.role ?? 'intern';
@@ -67,6 +68,7 @@ export default function RegisterPage() {
 
   const handleGoogleRegister = async () => {
     setLoading(true);
+    setStatusMessage(null);
     const role = selectedRole;
     const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard&role=${role}`;
 
@@ -83,33 +85,51 @@ export default function RegisterPage() {
 
     if (error) {
       toast.error(error.message);
+      setStatusMessage(error.message);
       setLoading(false);
     }
   };
 
   const onEmailSubmit = async (data: RegisterForm) => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard&role=${selectedRole}`,
-        data: {
-          full_name: data.full_name,
-          role: selectedRole,
+    setStatusMessage('Creating your account...');
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: data.email.trim(),
+        password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard&role=${selectedRole}`,
+          data: {
+            full_name: data.full_name.trim(),
+            role: selectedRole,
+          },
         },
-      },
-    });
+      });
 
-    setLoading(false);
+      if (error) {
+        toast.error(error.message);
+        setStatusMessage(error.message);
+        return;
+      }
 
-    if (error) {
-      toast.error(error.message);
-      return;
+      const message = 'Account created! Please check your email to confirm.';
+      toast.success(message);
+      setStatusMessage(message);
+      setTimeout(() => router.push('/auth/login'), 700);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
+      toast.error(message);
+      setStatusMessage(message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    toast.success('Account created! Please check your email to confirm.');
-    router.push('/auth/login');
+  const onInvalidSubmit = () => {
+    const message = 'Please fill all required fields correctly.';
+    toast.error(message);
+    setStatusMessage(message);
   };
 
   const sendPhoneOtp = async () => {
@@ -118,34 +138,47 @@ export default function RegisterPage() {
 
     if (!fullName) {
       toast.error('Full name is required');
+      setStatusMessage('Full name is required');
       return;
     }
 
     if (!phone) {
       toast.error('Phone number is required');
+      setStatusMessage('Phone number is required');
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      phone,
-      options: {
-        data: {
-          full_name: fullName,
-          role: selectedRole,
-          phone,
+    setStatusMessage('Sending OTP...');
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone,
+        options: {
+          data: {
+            full_name: fullName,
+            role: selectedRole,
+            phone,
+          },
         },
-      },
-    });
-    setLoading(false);
+      });
 
-    if (error) {
-      toast.error(error.message);
-      return;
+      if (error) {
+        toast.error(error.message);
+        setStatusMessage(error.message);
+        return;
+      }
+
+      setOtpSent(true);
+      toast.success('OTP sent to your phone number');
+      setStatusMessage('OTP sent to your phone number');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send OTP.';
+      toast.error(message);
+      setStatusMessage(message);
+    } finally {
+      setLoading(false);
     }
-
-    setOtpSent(true);
-    toast.success('OTP sent to your phone number');
   };
 
   const verifyPhoneOtp = async () => {
@@ -155,26 +188,37 @@ export default function RegisterPage() {
 
     if (!phone || !otp) {
       toast.error('Phone number and OTP are required');
+      setStatusMessage('Phone number and OTP are required');
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.verifyOtp({
-      phone,
-      token: otp,
-      type: 'sms',
-    });
+    setStatusMessage('Verifying OTP...');
 
-    if (error) {
-      toast.error(error.message);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone,
+        token: otp,
+        type: 'sms',
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setStatusMessage(error.message);
+        return;
+      }
+
+      await updateProfileAfterAuth(fullName, phone);
+      toast.success('Registration complete');
+      setStatusMessage('Registration complete');
+      router.push('/dashboard');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'OTP verification failed.';
+      toast.error(message);
+      setStatusMessage(message);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    await updateProfileAfterAuth(fullName, phone);
-    setLoading(false);
-    toast.success('Registration complete');
-    router.push('/dashboard');
   };
 
   return (
@@ -230,7 +274,7 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit(onEmailSubmit)}>
+        <form className="auth-form" onSubmit={handleSubmit(onEmailSubmit, onInvalidSubmit)} noValidate>
           <div className="form-group">
             <label className="form-label">Full name</label>
             <input
@@ -322,6 +366,8 @@ export default function RegisterPage() {
             </>
           )}
         </form>
+
+        {statusMessage && <div className="auth-status-message">{statusMessage}</div>}
 
         <div className="auth-footer">
           Already have an account? <Link href="/auth/login">Sign in</Link>
