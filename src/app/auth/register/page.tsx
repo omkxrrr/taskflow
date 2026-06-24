@@ -49,7 +49,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
 
-    const { data: authData, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: data.email.trim(),
       password: data.password,
       options: {
@@ -68,13 +68,8 @@ export default function RegisterPage() {
     }
 
     toast.success('Account created successfully!');
-
-    if (authData.session) {
-      router.push('/dashboard');
-      return;
-    }
-
-    router.push('/auth/login');
+    await supabase.auth.signOut();
+    router.push('/auth/login?registered=1');
   };
 
   return (

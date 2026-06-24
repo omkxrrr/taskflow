@@ -20,6 +20,9 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const error = params.get('error');
     if (error) toast.error(error);
+    if (params.get('registered') === '1') {
+      toast.success('Account created successfully. Please sign in.');
+    }
   }, []);
 
   const onSubmit = async (data: LoginForm) => {
