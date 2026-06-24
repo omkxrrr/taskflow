@@ -28,11 +28,20 @@ A role-based task management system built with **Next.js 14**, **Supabase**, and
 
 ## Screenshots
 
+### Brand
+![TaskFlow Logo](screenshots/taskflow-logo.png)
+
 ### Login Page
 ![TaskFlow Login Page](screenshots/login-page.png)
 
 ### Register Page
 ![TaskFlow Register Page](screenshots/register-page.png)
+
+### Registration Form
+![TaskFlow Registration Form](screenshots/registration-form.png)
+
+### Completion Widget
+![TaskFlow Completion Widget](screenshots/completion-widget.png)
 
 ### Chat Page
 ![TaskFlow Chat Page](screenshots/chat-page.png)
