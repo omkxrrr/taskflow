@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -38,7 +37,6 @@ const registrationOptions: Array<{
 ];
 
 export default function RegisterPage() {
-  const router = useRouter();
   const supabase = createClient();
   const [registrationType, setRegistrationType] = useState<RegistrationType>('team_member');
   const [loading, setLoading] = useState(false);
@@ -69,7 +67,7 @@ export default function RegisterPage() {
 
     toast.success('Account created successfully!');
     await supabase.auth.signOut();
-    router.push('/auth/login?registered=1');
+    window.location.replace('/auth/login?registered=1');
   };
 
   return (
